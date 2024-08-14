@@ -1,0 +1,9 @@
+psycopg2-binary
+Django
+gunicorn
+whitenoise
+django-cors-headers
+requests
+cloudinary
+django-phonenumber-field
+django-cloudinary-storage
