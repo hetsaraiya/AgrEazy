@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
     "cloudinary",
     "phonenumber_field",
+    "rest_framework_simplejwt"
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,12 @@ DATABASES = {
 #     }
 # }
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -149,3 +156,31 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 PHONENUMBER_DEFAULT_REGION = 'IN'
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
+}
+
+AUTH_USER_MODEL = 'apis.User'
+
+SUPABASE_STORAGE = 'SupabaseStorage'
+SUPABASE_URL = str(os.getenv('SUPABASE_URL'))
+SUPABASE_KEY = str(os.getenv('SUPABASE_KEY'))
+SUPABASE_BUCKET = str(os.getenv('SUPABASE_BUCKET'))
+

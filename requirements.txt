@@ -7,3 +7,6 @@ requests
 cloudinary
 django-phonenumber-field
 django-cloudinary-storage
+djangorestframework-simplejwt
+djangorestframework
+supabase

@@ -1,3 +1,4 @@
 .env
 
 extras/
+__pycache__/

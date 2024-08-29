@@ -1,12 +1,47 @@
 from typing import Any, Iterable
+from django.conf import settings
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.core.exceptions import ValidationError
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin  
+from django.core.files.storage import get_storage_class
 
 # Create your models here.
 
-class User(models.Model):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, username, phone_number, user_type, password=None, **extra_fields):
+        if not username:
+            raise ValueError('The Username field must be set')
+        if not phone_number:
+            raise ValueError('The Phone Number field must be set')
+
+        # Set default values for fields if not provided
+        email = extra_fields.get('email', None)
+        user = self.model(
+            username=username,
+            phone_number=phone_number,
+            user_type=user_type,
+            email=email,
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, phone_number, user_type='admin', password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)  # Ensuring superuser is active
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(username, phone_number, user_type, password, **extra_fields)
+
+class User(AbstractBaseUser, PermissionsMixin):  # Inherit from PermissionsMixin
     FARMER = 'farmer'
     CONSUMER = 'consumer'
     ADMIN = 'admin'
@@ -17,16 +52,28 @@ class User(models.Model):
         (ADMIN, 'Admin'),
     ]
     
-    name = models.CharField(max_length=100, default="")
-    phone_number = PhoneNumberField(blank=False)
-    email = models.EmailField()
+    username = models.CharField(max_length=100, default="", unique=True)
+    phone_number = PhoneNumberField(blank=False, unique=True, null=False)
+    email = models.EmailField(unique=True, blank=True, null=True)  # Optional
     password = models.CharField(max_length=100, default="")
+    name = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=CONSUMER)
+    
+    # Add the necessary fields for Django admin and superuser functionality
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)  # To manage active status
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['phone_number', 'user_type']  # You can add 'email' if you want it to be required
+
+    objects = CustomUserManager()
 
     def __str__(self):
-        return self.name
+        return self.username
+
     
 class Product(models.Model):
     PRODUCT_CHOICES = [
@@ -123,10 +170,10 @@ def generate_addhar_public_id(instance):
 def generate_pan_public_id(instance):
     return f"pan/{instance.user.name}_pan_card"
 
-class VerificationDocs(models.Model):
+class FarmerVerificationDocs(models.Model):
     user = models.ForeignKey("User", on_delete=models.SET_DEFAULT, default=get_first_user_or_unknown)
-    addhar_card = CloudinaryField('addhar', public_id=generate_addhar_public_id)
-    pan_card = CloudinaryField('pan-card', public_id=generate_pan_public_id)
+    addhar_card = models.FileField(storage=get_storage_class()(settings.SUPABASE_STORAGE), upload_to='addhar/', blank=True, null=True)
+    pan_card = models.FileField(storage=get_storage_class()(settings.SUPABASE_STORAGE), upload_to='pan-card/', blank=True, null=True)
 
     def __str__(self):
         return f"Verification Docs From {self.user.name}"
