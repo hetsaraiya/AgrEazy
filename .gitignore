@@ -2,3 +2,7 @@
 
 extras/
 __pycache__/
+.vercel
+vercel.json
+ui/
+build_files.sh

@@ -5,7 +5,6 @@ from cloudinary.models import CloudinaryField
 from django.core.exceptions import ValidationError
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin  
-from django.core.files.storage import get_storage_class
 
 # Create your models here.
 
@@ -171,9 +170,18 @@ def generate_pan_public_id(instance):
     return f"pan/{instance.user.name}_pan_card"
 
 class FarmerVerificationDocs(models.Model):
-    user = models.ForeignKey("User", on_delete=models.SET_DEFAULT, default=get_first_user_or_unknown)
-    addhar_card = models.FileField(storage=get_storage_class()(settings.SUPABASE_STORAGE), upload_to='addhar/', blank=True, null=True)
-    pan_card = models.FileField(storage=get_storage_class()(settings.SUPABASE_STORAGE), upload_to='pan-card/', blank=True, null=True)
+    user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True)
+    addhar_card = models.FileField(upload_to='addhar/', blank=True, null=True)
+    pan_card = models.FileField(upload_to='pan-card/', blank=True, null=True)
+    satbaarcopy = models.FileField(upload_to='satbaarcopy/', blank=True, null=True)
+
+    def __str__(self):
+        return f"Verification Docs From {self.user.name}"
+    
+class ConsumerVerificationDocs(models.Model):
+    user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True)
+    addhar_card = models.FileField(upload_to='addhar/', blank=True, null=True)
+    pan_card = models.FileField(upload_to='pan-card/', blank=True, null=True)
 
     def __str__(self):
         return f"Verification Docs From {self.user.name}"

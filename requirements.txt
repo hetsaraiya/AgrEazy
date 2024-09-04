@@ -10,3 +10,8 @@ django-cloudinary-storage
 djangorestframework-simplejwt
 djangorestframework
 supabase
+boto3
+django-storages
+python-dotenv
+phonenumbers
+whitenoise

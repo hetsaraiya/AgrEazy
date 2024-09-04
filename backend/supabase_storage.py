@@ -11,17 +11,17 @@ class SupabaseStorage(Storage):
         self.supabase = create_client(self.supabase_url, self.supabase_key)
 
     def _save(self, name, content):
-        # Convert content to bytes for uploading
-        file_content = BytesIO(content.read())
+        # Convert InMemoryUploadedFile to bytes
+        file_content = content.read()
         
         # Upload the file to the specified bucket in Supabase
-        response = self.supabase.storage.from_(self.bucket_name).upload(name, file_content.read())
+        response = self.supabase.storage.from_(self.bucket_name).upload(name, file_content)
         
         if response.get('error'):
             raise Exception(f"Error uploading to Supabase: {response['error']['message']}")
         
         # Return the path where the file was uploaded
-        return response['data']['path']
+        return name
 
     def url(self, name):
         # Get the public URL of the file in Supabase
@@ -34,4 +34,6 @@ class SupabaseStorage(Storage):
 
     def delete(self, name):
         # Delete the file from Supabase
-        self.supabase.storage.from_(self.bucket_name).remove([name])
+        response = self.supabase.storage.from_(self.bucket_name).remove([name])
+        if response.get('error'):
+            raise Exception(f"Error deleting from Supabase: {response['error']['message']}")

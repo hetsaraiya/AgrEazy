@@ -8,4 +8,5 @@ class SignUpForm(UserCreationForm):
         fields = ['username', 'phone_number', 'email', 'password1', 'password2', 'user_type']
 
 class LoginForm(AuthenticationForm):
-    username = forms.EmailField(label="Email")
+    class Meta:
+        fields = ['username', 'password']
