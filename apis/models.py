@@ -56,6 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # Inherit from PermissionsMixin
     email = models.EmailField(unique=True, blank=True, null=True)  # Optional
     password = models.CharField(max_length=100, default="")
     name = models.CharField(max_length=255, blank=True, null=True)
+    verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default=CONSUMER)
@@ -176,12 +177,16 @@ class FarmerVerificationDocs(models.Model):
     satbaarcopy = models.FileField(upload_to='satbaarcopy/', blank=True, null=True)
 
     def __str__(self):
-        return f"Verification Docs From {self.user.name}"
-    
+        # Check if user is not None, otherwise use 'Unknown User'
+        user_display = self.user.username if self.user else 'Unknown User'
+        return f"Verification Docs From {user_display}"
+
 class ConsumerVerificationDocs(models.Model):
     user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True)
     addhar_card = models.FileField(upload_to='addhar/', blank=True, null=True)
     pan_card = models.FileField(upload_to='pan-card/', blank=True, null=True)
 
     def __str__(self):
-        return f"Verification Docs From {self.user.name}"
+        # Check if user is not None, otherwise use 'Unknown User'
+        user_display = self.user.username if self.user else 'Unknown User'
+        return f"Verification Docs From {user_display}"

@@ -79,12 +79,28 @@ def login_view(request):
     email = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(request, username=email, password=password)
+    
     if user is not None:
+        docs_uploaded = False
+        if user.user_type == User.FARMER:
+            ver = FarmerVerificationDocs.objects.filter(user=user).first()
+        elif user.user_type == User.CONSUMER:
+            ver = ConsumerVerificationDocs.objects.filter(user=user).first()
+        
+        if ver is not None:
+            if hasattr(ver, 'addhar_card') and ver.addhar_card:
+                docs_uploaded = True
+        else:
+            docs_uploaded = False
+            user.verified = False
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
             'user_type': user.user_type,
+            'verified': user.verified,
+            'docs_uploaded': docs_uploaded
         })
     else:
         return Response({'error': 'Invalid email or password.'}, status=400)
@@ -156,7 +172,7 @@ def upload_verification_docs(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def upload_verification_docs(request):
+def upload_verification_docs_consumer(request):
     # Check if the user is a consumer
     if request.user.user_type == User.CONSUMER:
         user = request.user
@@ -197,3 +213,11 @@ def upload_verification_docs(request):
 
     # Return 400 Bad Request for any other user types
     return Response({"message": "Invalid user type."}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_verified(request):
+    if request.user.verified:
+        return Response({"message": "User is verified."}, status=status.HTTP_200_OK)
+    else:
+        return Response({"message": "User is not verified."}, status=status.HTTP_401_UNAUTHORIZED)
